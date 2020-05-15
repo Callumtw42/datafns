@@ -1,7 +1,6 @@
-package datafns
+package main
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,6 +40,23 @@ func populated() []map[string]interface{} {
 	return data
 }
 
+var _2x2 Data = Data{
+	{"i": float64(-1), "s": "abc"},
+	{"n": float64(1), "s": "def"},
+}
+
+var _2x3 Data = Data{
+	{"n": float64(-1), "s": "abc"},
+	{"n": float64(0), "s": "def"},
+	{"n": float64(1), "s": "ghi"},
+}
+
+var _3x3 Data = Data{
+	{"n": float64(-1), "f": float64(-1.5), "s": "abc"},
+	{"n": float64(0), "f": float64(0.0), "s": "def"},
+	{"n": float64(1), "f": float64(1.5), "s": "ghi"},
+}
+
 var data []map[string]interface{} = populated()
 
 func TestData_Empty(t *testing.T) {
@@ -55,9 +71,9 @@ func TestData_Empty(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.data.Empty(); got != tt.want {
-				t.Errorf("Data.Empty() = %v, want %v", got, tt.want)
-			}
+			tt.data.Empty()
+			got := tt.data.Empty()
+			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
 }
@@ -77,9 +93,9 @@ func TestData_getColumn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotColumn := tt.data.getColumn(tt.args.colName); !reflect.DeepEqual(gotColumn, tt.wantColumn) {
-				t.Errorf("Data.getColumn() = %v, want %v", gotColumn, tt.wantColumn)
-			}
+			tt.data.GetColumn(tt.args.colName)
+			gotColumn := tt.data.GetColumn(tt.args.colName)
+			assert.Equal(t, tt.wantColumn, gotColumn, "", "")
 		})
 	}
 }
@@ -105,7 +121,8 @@ func TestData_sumColumn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotTotal := tt.data.sumColumn(tt.args.colName)
+			tt.data.SumColumn(tt.args.colName)
+			gotTotal := tt.data.SumColumn(tt.args.colName)
 			assert.Equal(t, tt.wantTotal, gotTotal, "", "")
 		})
 	}
@@ -140,7 +157,8 @@ func TestData_setColumn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotCopy := tt.data.setColumn(tt.args.colName, tt.args.f)
+			tt.data.SetColumn(tt.args.colName, tt.args.f)
+			gotCopy := tt.data.SetColumn(tt.args.colName, tt.args.f)
 			assert.Equal(t, tt.wantCopy, gotCopy, "", "")
 		})
 	}
@@ -171,13 +189,11 @@ func TestData_addColumn(t *testing.T) {
 				{"n": float64(2), "s": "def", "new": float64(4)},
 			},
 		},
-		{"empty", Data(nil), args{"n", "new", f},
-			Data(nil),
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.data.addColumn(tt.args.colName, tt.args.newColName, tt.args.f)
+			tt.data.AddColumn(tt.args.colName, tt.args.newColName, tt.args.f)
+			got := tt.data.AddColumn(tt.args.colName, tt.args.newColName, tt.args.f)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -212,7 +228,8 @@ func TestData_removeColumns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.data.removeColumns(tt.args.colNames...)
+			tt.data.RemoveColumns(tt.args.colNames...)
+			got := tt.data.RemoveColumns(tt.args.colNames...)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -241,7 +258,221 @@ func TestData_columns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := tt.data.columns(tt.args.colNames...)
+			tt.data.Columns(tt.args.colNames...)
+			got := tt.data.Columns(tt.args.colNames...)
+			assert.Equal(t, tt.want, got, "", "")
+		})
+	}
+}
+
+func TestData_getUniqueValues(t *testing.T) {
+	type f = float64
+	data = Data{
+		{"n": f(1), "s": "x"},
+		{"n": f(1), "s": "x"},
+		{"n": f(2), "s": "y"},
+		{"n": f(2), "s": "y"},
+	}
+	type args struct {
+		colName string
+	}
+	tests := []struct {
+		name     string
+		data     Data
+		args     args
+		wantVals []interface{}
+	}{
+		{"string", data, args{"s"}, []interface{}{
+			"x", "y",
+		}},
+
+		{"float", data, args{"n"}, []interface{}{
+			f(1), f(2),
+		}},
+
+		{"wrong", data, args{"banana"}, []interface{}{nil}},
+		{"empty", Data(nil), args{"n"}, []interface{}(nil)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.data.GetUniqueValues(tt.args.colName)
+			gotVals := tt.data.GetUniqueValues(tt.args.colName)
+			assert.Equal(t, tt.wantVals, gotVals, "", "")
+		})
+	}
+}
+
+func TestData_splitByValues(t *testing.T) {
+	type args struct {
+		colName string
+	}
+	data = Data{
+		{"n": float64(3), "s": "a"},
+		{"n": float64(2), "s": "a"},
+		{"n": float64(1), "s": "a"},
+		{"n": float64(1), "s": "b"},
+		{"n": float64(2), "s": "b"},
+		{"n": float64(3), "s": "b"},
+	}
+	expTestInt := []Data{
+		Data{
+			{"n": float64(3), "s": "a"},
+			{"n": float64(3), "s": "b"},
+		},
+		Data{
+			{"n": float64(2), "s": "a"},
+			{"n": float64(2), "s": "b"},
+		},
+		Data{
+			{"n": float64(1), "s": "a"},
+			{"n": float64(1), "s": "b"},
+		},
+	}
+	expTestString := []Data{
+		Data{
+			{"n": float64(3), "s": "a"},
+			{"n": float64(2), "s": "a"},
+			{"n": float64(1), "s": "a"},
+		},
+		Data{
+			{"n": float64(1), "s": "b"},
+			{"n": float64(2), "s": "b"},
+			{"n": float64(3), "s": "b"},
+		},
+	}
+	tests := []struct {
+		name      string
+		data      Data
+		args      args
+		wantSplit []Data
+	}{
+		{"test int", data, args{"n"}, expTestInt},
+		{"test string", data, args{"s"}, expTestString},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.data.SplitByValues(tt.args.colName)
+			gotSplit := tt.data.SplitByValues(tt.args.colName)
+			assert.Equal(t, tt.wantSplit, gotSplit, "", "")
+		})
+	}
+}
+
+func TestData_sumAndGroup(t *testing.T) {
+	data = Data{
+		{"x": float64(2), "y": float64(4), "s": "a"},
+		{"x": float64(2), "y": float64(3), "s": "b"},
+		{"x": float64(3), "y": float64(2), "s": "a"},
+		{"x": float64(3), "y": float64(1), "s": "b"},
+	}
+	expS := Data{
+		{"x": float64(5), "y": float64(6), "s": "a"},
+		{"x": float64(5), "y": float64(4), "s": "b"},
+	}
+	expX := Data{
+		{"x": float64(2), "y": float64(7), "s": "a"},
+		{"x": float64(3), "y": float64(3), "s": "a"},
+	}
+	type args struct {
+		colName string
+	}
+	tests := []struct {
+		name       string
+		data       Data
+		args       args
+		wantSubset Data
+	}{
+		{"group by x", data, args{"x"}, expX},
+		{"group by s", data, args{"s"}, expS},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.data.SumAndGroup(tt.args.colName)
+			gotSubset := tt.data.SumAndGroup(tt.args.colName)
+			assert.Equal(t, tt.wantSubset, gotSubset, "", "")
+		})
+	}
+}
+
+func TestData_getElementsWithValue(t *testing.T) {
+	data = Data{
+		{"x": float64(1), "s": "a"},
+		{"x": float64(0), "s": "a"},
+		{"x": float64(1), "s": "b"},
+		{"x": float64(0), "s": "b"},
+	}
+	exp := Data{
+		{"x": float64(1), "s": "a"},
+		{"x": float64(1), "s": "b"},
+	}
+	type args struct {
+		colName string
+		value   interface{}
+	}
+	tests := []struct {
+		name     string
+		data     Data
+		args     args
+		wantRows Data
+	}{
+		{"get 1", data, args{"x", float64(1)}, exp},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.data.getElementsWithValue(tt.args.colName, tt.args.value)
+			gotRows := tt.data.getElementsWithValue(tt.args.colName, tt.args.value)
+			assert.Equal(t, tt.wantRows, gotRows, "", "")
+		})
+	}
+}
+
+func TestData_sortBy(t *testing.T) {
+	data = Data{
+		{"x": float64(4), "y": "b"},
+		{"x": float64(1), "y": "a"},
+		{"x": float64(3), "y": "da"},
+		{"x": float64(2), "y": "ca"},
+	}
+
+	exp1 := Data{
+		{"x": float64(1), "y": "a"},
+		{"x": float64(2), "y": "ca"},
+		{"x": float64(3), "y": "da"},
+		{"x": float64(4), "y": "b"},
+	}
+
+	exp2 := Data{
+		{"x": float64(4), "y": "b"},
+		{"x": float64(3), "y": "da"},
+		{"x": float64(2), "y": "ca"},
+		{"x": float64(1), "y": "a"},
+	}
+
+	exp3 := Data{
+		{"x": float64(1), "y": "a"},
+		{"x": float64(4), "y": "b"},
+		{"x": float64(2), "y": "ca"},
+		{"x": float64(3), "y": "da"},
+	}
+
+	type args struct {
+		colName string
+		order   string
+	}
+	tests := []struct {
+		name string
+		data Data
+		args args
+		want Data
+	}{
+		{"num asc", data, args{"x", "asc"}, exp1},
+		{"num desc", data, args{"x", "desc"}, exp2},
+		{"string", data, args{"y", "asc"}, exp3},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.data.SortBy(tt.args.colName, tt.args.order)
+			got := tt.data.SortBy(tt.args.colName, tt.args.order)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
