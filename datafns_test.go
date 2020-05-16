@@ -72,7 +72,7 @@ func TestData_Empty(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.data.empty()
-			got := tt.data.Empty()
+			got := tt.data.empty()
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -93,8 +93,8 @@ func TestData_getColumn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.GetColumn(tt.args.colName)
-			gotColumn := tt.data.GetColumn(tt.args.colName)
+			tt.data.getColumn(tt.args.colName)
+			gotColumn := tt.data.getColumn(tt.args.colName)
 			assert.Equal(t, tt.wantColumn, gotColumn, "", "")
 		})
 	}
@@ -121,8 +121,8 @@ func TestData_sumColumn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.SumColumn(tt.args.colName)
-			gotTotal := tt.data.SumColumn(tt.args.colName)
+			tt.data.sumColumn(tt.args.colName)
+			gotTotal := tt.data.sumColumn(tt.args.colName)
 			assert.Equal(t, tt.wantTotal, gotTotal, "", "")
 		})
 	}
@@ -157,8 +157,8 @@ func TestData_setColumn(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.SetColumn(tt.args.colName, tt.args.f)
-			gotCopy := tt.data.SetColumn(tt.args.colName, tt.args.f)
+			tt.data.setColumn(tt.args.colName, tt.args.f)
+			gotCopy := tt.data.setColumn(tt.args.colName, tt.args.f)
 			assert.Equal(t, tt.wantCopy, gotCopy, "", "")
 		})
 	}
@@ -192,8 +192,8 @@ func TestData_addColumn(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.AddColumn(tt.args.colName, tt.args.newColName, tt.args.f)
-			got := tt.data.AddColumn(tt.args.colName, tt.args.newColName, tt.args.f)
+			tt.data.addColumn(tt.args.colName, tt.args.newColName, tt.args.f)
+			got := tt.data.addColumn(tt.args.colName, tt.args.newColName, tt.args.f)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -228,8 +228,8 @@ func TestData_removeColumns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.RemoveColumns(tt.args.colNames...)
-			got := tt.data.RemoveColumns(tt.args.colNames...)
+			tt.data.removeColumns(tt.args.colNames...)
+			got := tt.data.removeColumns(tt.args.colNames...)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -258,8 +258,8 @@ func TestData_columns(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.Columns(tt.args.colNames...)
-			got := tt.data.Columns(tt.args.colNames...)
+			tt.data.columns(tt.args.colNames...)
+			got := tt.data.columns(tt.args.colNames...)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
@@ -295,8 +295,8 @@ func TestData_getUniqueValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.GetUniqueValues(tt.args.colName)
-			gotVals := tt.data.GetUniqueValues(tt.args.colName)
+			tt.data.getUniqueValues(tt.args.colName)
+			gotVals := tt.data.getUniqueValues(tt.args.colName)
 			assert.Equal(t, tt.wantVals, gotVals, "", "")
 		})
 	}
@@ -315,26 +315,26 @@ func TestData_splitByValues(t *testing.T) {
 		{"n": float64(3), "s": "b"},
 	}
 	expTestInt := []Data{
-		Data{
+		{
 			{"n": float64(3), "s": "a"},
 			{"n": float64(3), "s": "b"},
 		},
-		Data{
+		{
 			{"n": float64(2), "s": "a"},
 			{"n": float64(2), "s": "b"},
 		},
-		Data{
+		{
 			{"n": float64(1), "s": "a"},
 			{"n": float64(1), "s": "b"},
 		},
 	}
 	expTestString := []Data{
-		Data{
+		{
 			{"n": float64(3), "s": "a"},
 			{"n": float64(2), "s": "a"},
 			{"n": float64(1), "s": "a"},
 		},
-		Data{
+		{
 			{"n": float64(1), "s": "b"},
 			{"n": float64(2), "s": "b"},
 			{"n": float64(3), "s": "b"},
@@ -351,8 +351,8 @@ func TestData_splitByValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.SplitByValues(tt.args.colName)
-			gotSplit := tt.data.SplitByValues(tt.args.colName)
+			tt.data.splitByValues(tt.args.colName)
+			gotSplit := tt.data.splitByValues(tt.args.colName)
 			assert.Equal(t, tt.wantSplit, gotSplit, "", "")
 		})
 	}
@@ -387,8 +387,8 @@ func TestData_sumAndGroup(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.SumAndGroup(tt.args.colName)
-			gotSubset := tt.data.SumAndGroup(tt.args.colName)
+			tt.data.sumAndGroup(tt.args.colName)
+			gotSubset := tt.data.sumAndGroup(tt.args.colName)
 			assert.Equal(t, tt.wantSubset, gotSubset, "", "")
 		})
 	}
@@ -471,8 +471,8 @@ func TestData_sortBy(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.data.SortBy(tt.args.colName, tt.args.order)
-			got := tt.data.SortBy(tt.args.colName, tt.args.order)
+			tt.data.sortBy(tt.args.colName, tt.args.order)
+			got := tt.data.sortBy(tt.args.colName, tt.args.order)
 			assert.Equal(t, tt.want, got, "", "")
 		})
 	}
