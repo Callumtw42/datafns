@@ -8,11 +8,28 @@ import (
 	"sort"
 )
 
+//Datafns ..
+type d interface {
+	empty() bool
+	getColumn(colName string) (column []interface{})
+	sumColumn(colName string) (total float64)
+	setColumn(colName string, f func(e interface{}) interface{}) (cpy Data)
+	addColumn(colName string, newColName string, f func(interface{}) interface{}) Data
+	removeColumns(colNames ...string) Data
+	columns(colNames ...string) (subset Data)
+	getUniqueValues(colName string) (vals []interface{})
+	splitByValues(colName string) (split []Data)
+	sumAndGroup(colName string) (subset Data)
+	getElementsWithValue(colName string, value interface{}) (rows Data)
+	sortBy(colName string, order string) Data
+}
+
 //Data an array of untyped maps
 type Data []map[string]interface{}
 
 //Empty returns true if data is empty
-func (data Data) Empty() bool {
+func (data Data) empty() bool {
+
 	if data == nil {
 		fmt.Println("Data = null")
 	}
@@ -20,7 +37,7 @@ func (data Data) Empty() bool {
 }
 
 //GetColumn returns a column as a slice
-func (data Data) GetColumn(colName string) (column []interface{}) {
+func (data Data) getColumn(colName string) (column []interface{}) {
 	for _, e := range data {
 		column = append(column, e[colName])
 	}
@@ -28,8 +45,8 @@ func (data Data) GetColumn(colName string) (column []interface{}) {
 }
 
 //SumColumn returns the sum of a column
-func (data Data) SumColumn(colName string) (total float64) {
-	if !data.Empty() {
+func (data Data) sumColumn(colName string) (total float64) {
+	if !data.empty() {
 		var typ string = reflect.TypeOf(data[0][colName]).Name()
 		if typ == "int64" || typ == "float64" {
 			for _, e := range data {
@@ -41,7 +58,7 @@ func (data Data) SumColumn(colName string) (total float64) {
 }
 
 //SetColumn returns a copy modifying an existing column by running function f on each value in an existing column
-func (data Data) SetColumn(colName string, f func(e interface{}) interface{}) (cpy Data) {
+func (data Data) setColumn(colName string, f func(e interface{}) interface{}) (cpy Data) {
 	for _, e := range data {
 		cpyE := deepCopy(e)
 		cpyE[colName] = f(cpyE[colName])
@@ -51,7 +68,7 @@ func (data Data) SetColumn(colName string, f func(e interface{}) interface{}) (c
 }
 
 //AddColumn returns a copy adding a new column by running the function f on each value in an existing column
-func (data Data) AddColumn(colName string, newColName string, f func(interface{}) interface{}) Data {
+func (data Data) addColumn(colName string, newColName string, f func(interface{}) interface{}) Data {
 	for _, e := range data {
 		e[newColName] = f(e[colName])
 	}
@@ -59,7 +76,7 @@ func (data Data) AddColumn(colName string, newColName string, f func(interface{}
 }
 
 //RemoveColumns returns a copy with 1 or more columns removed
-func (data Data) RemoveColumns(colNames ...string) Data {
+func (data Data) removeColumns(colNames ...string) Data {
 	for _, e := range data {
 		for _, colName := range colNames {
 			delete(e, colName)
@@ -69,7 +86,7 @@ func (data Data) RemoveColumns(colNames ...string) Data {
 }
 
 //Columns returns a copy with only the selected columns
-func (data Data) Columns(colNames ...string) (subset Data) {
+func (data Data) columns(colNames ...string) (subset Data) {
 	for i, e := range data {
 		subset = append(subset, map[string]interface{}{})
 		for _, colName := range colNames {
@@ -80,7 +97,7 @@ func (data Data) Columns(colNames ...string) (subset Data) {
 }
 
 //GetUniqueValues returns an slice holding only unique values of a given column
-func (data Data) GetUniqueValues(colName string) (vals []interface{}) {
+func (data Data) getUniqueValues(colName string) (vals []interface{}) {
 	set := map[interface{}]bool{}
 	for _, e := range data {
 		if !set[e[colName]] {
@@ -92,7 +109,7 @@ func (data Data) GetUniqueValues(colName string) (vals []interface{}) {
 }
 
 //SplitByValues splits the data into seperate slices according to distinct values in the given column
-func (data Data) SplitByValues(colName string) (split []Data) {
+func (data Data) splitByValues(colName string) (split []Data) {
 	valSet := map[interface{}]interface{}{}
 	var valCount int
 	for _, e := range data {
@@ -109,39 +126,8 @@ func (data Data) SplitByValues(colName string) (split []Data) {
 	return split
 }
 
-// //SumAndGroup
-// func (data Data) SumAndGroup(colName string) (subset Data) {
-
-// 	valSet := map[interface{}]interface{}{}
-// 	var valCount int
-
-// 	var numeric []string
-// 	var sampleRow map[string]interface{} = data[0]
-// 	for k, v := range sampleRow {
-// 		typ := reflect.TypeOf(v).Name()
-// 		if typ == "float64" && k != colName {
-// 			numeric = append(numeric, k)
-// 		}
-// 	}
-
-// 	for _, e := range data {
-// 		var key interface{} = e[colName]
-// 		if valSet[key] == nil {
-// 			valSet[key] = valCount
-// 			subset = append(subset, e)
-// 			valCount++
-// 		} else {
-// 			accRow := &subset[valSet[key].(int)]
-// 			for _, k := range numeric {
-// 				(*accRow)[k] = (*accRow)[k].(float64) + e[k].(float64)
-// 			}
-// 		}
-// 	}
-// 	return subset
-// }
-
 //SumAndGroup
-func (data Data) SumAndGroup(colName string) (subset Data) {
+func (data Data) sumAndGroup(colName string) (subset Data) {
 
 	valSet := map[interface{}]interface{}{}
 	var valCount int
@@ -171,16 +157,6 @@ func (data Data) SumAndGroup(colName string) (subset Data) {
 	return subset
 }
 
-func deepCopy(m map[string]interface{}) map[string]interface{} {
-	j, err := json.Marshal(m)
-	if err != nil {
-		log.Fatalf("cmd.Run() failed with %s\n", err)
-	}
-	var c *map[string]interface{}
-	json.Unmarshal(j, &c)
-	return *c
-}
-
 func (data Data) getElementsWithValue(colName string, value interface{}) (rows Data) {
 	for _, e := range data {
 		if e[colName] == value {
@@ -190,7 +166,7 @@ func (data Data) getElementsWithValue(colName string, value interface{}) (rows D
 	return rows
 }
 
-func (data Data) SortBy(colName string, order string) Data {
+func (data Data) sortBy(colName string, order string) Data {
 	conditions := [2]string{reflect.TypeOf(data[0][colName]).Name(), order}
 	var less func(i, j int) bool
 	switch conditions {
@@ -207,17 +183,12 @@ func (data Data) SortBy(colName string, order string) Data {
 	return data
 }
 
-// function sort(data, property, order) {
-//     return data.sort(sortByProperty(property, order))
-// }
-
-// function sortByProperty(property, order) {
-//     order = (order === 'asc') ? -1 : 1;
-//     return function (a, b) {
-//         if (a[property] > b[property])
-//             return order;
-//         else if (a[property] < b[property])
-//             return -order;
-//         return 0;
-//     }
-// }
+func deepCopy(m map[string]interface{}) map[string]interface{} {
+	j, err := json.Marshal(m)
+	if err != nil {
+		log.Fatalf("cmd.Run() failed with %s\n", err)
+	}
+	var c *map[string]interface{}
+	json.Unmarshal(j, &c)
+	return *c
+}
